@@ -61,10 +61,17 @@ average <- average %>% select(Profit, Customer_Segment, Product_Category, Region
   filter(Region!="Region 3" & Region!="Region 5" & Region!="Region 8") %>%
   group_by(Region, Customer_Segment, Product_Category)%>%
   summarize(ProfitTotal=mean(Profit))
-average <- average %>%  select(Region, Customer_Segment, Product_Category, ProfitTotal) %>%
+average1 <- average %>%  select(Region, Customer_Segment, Product_Category, ProfitTotal) %>%
   group_by(Region) %>% summarize(MaxProfit=max(ProfitTotal)) 
-average
+average1
+
+max <- max(average1$MaxProfit)
+result <- average %>% filter(ProfitTotal==max)
+result
+
 ```
+
+The maximum Profit is in the ```r result$Region``` in ```r result$Customer_Segment``` and ```r result$Product_Category``` with a total profit of ```r result$ProfitTotal```
 
 ## Question 5
 
@@ -97,6 +104,7 @@ plot
 
 ```
 
+We can see the true result of year 2017.
 
 
 
