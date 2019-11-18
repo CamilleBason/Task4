@@ -1,0 +1,104 @@
+---
+title: "Task4"
+author: "BASON Camille"
+date: "31/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+```
+
+# Read Data
+```{r}
+data <- read.csv("storedata.csv")
+data$Order_Date<-as.Date(data$Order_Date, format="%Y-%m-%d")
+```
+## Table 1
+
+```{r}
+data1 <- data%>% filter(year(Order_Date)==2017)
+data1 <- data1%>% filter(month(Order_Date)==12 | month(Order_Date)==11 | month(Order_Date)==10)
+data1 <- data1 %>% filter(Customer_Segment=="Corporate" | Customer_Segment=="Consumer")
+table1 <- data1%>% filter(Region=="Region 1" | Region=="Region 9") %>% group_by(Region, month=month(Order_Date), Customer_Segment) %>% summarise(sumCustomer=sum(Sales))
+table1
+```
+## Figure 1
+
+```{r}
+fig1 <- data%>% filter(year(Order_Date)==2017 | year(Order_Date)==2016 | year(Order_Date)==2015)
+fig1 <- fig1%>% filter(Region=="Region 1" | Region=="Region 13") %>% group_by(Region, year=year(Order_Date),month=month(Order_Date)) %>% summarise(SalesByMonth=sum(Sales)) 
+date <- as.factor(paste(fig1$year,fig1$month, 01, sep="-"))
+fig1$date <- date
+fig1$date<-as.Date(fig1$date, format="%Y-%m-%d")
+fig1
+figure1 <- ggplot(fig1, aes(x = date, y = SalesByMonth, colour = Region))+ 
+  geom_line(size=1.5)
+figure1
+```
+
+## Table 2
+```{r}
+region1 <- fig1 %>% filter(Region=="Region 1") %>% rename( Region1sales=SalesByMonth)
+region13 <- fig1 %>% filter(Region=="Region 13") %>% rename(Region13sales=SalesByMonth)
+table2 <- merge(region1, region13, by= "date")
+table2 <- table2 %>% select(date, Region1sales, Region13sales) 
+table2$diff <- table2$Region13sales-table2$Region1sales
+table2 <- table2 %>% filter(diff > 0)
+table2
+```
+
+## Table 3
+```{r}
+average <- data %>% filter(year(Order_Date)==2017)
+average <- average %>% select(Profit, Customer_Segment, Product_Category, Region) %>%
+  filter(Region!="Region 3" & Region!="Region 5" & Region!="Region 8") %>%
+  group_by(Region, Customer_Segment, Product_Category)%>%
+  summarize(ProfitTotal=mean(Profit))
+average <- average %>%  select(Region, Customer_Segment, Product_Category, ProfitTotal) %>%
+  group_by(Region) %>% summarize(MaxProfit=max(ProfitTotal)) 
+average
+```
+
+## Question 5
+
+```{r}
+library(forecast)
+
+data$Order_Date <- as.Date(data$Order_Date)
+data$month <- month(data$Order_Date, label = TRUE, abbr = FALSE)
+data$year <- year(data$Order_Date)
+
+base <- data %>%
+  filter(Customer_Segment == "Small Business" & Product_Category == "Office Supplies") %>%
+  group_by(year, month, Customer_Segment, Product_Category) %>%
+  summarise(quantity = sum(Order_Quantity)) %>%
+  filter(year != "2017") %>% select(month, year, quantity)
+
+#We keep only the date and the quantity
+base <- base[,-c(1:4)]
+base2 <- ts(base,frequency=12, start=c(2014,1))
+ 
+
+data2017 <- data %>%
+  filter(Customer_Segment == "Small Business" & Product_Category == "Office Supplies") %>%
+  group_by(year, month, Customer_Segment, Product_Category) %>%
+  summarise(quantity = sum(Order_Quantity)) %>%
+  filter(year == "2017")
+
+plot <- ggplot(data2017,aes(x=month, y=quantity ))+geom_point()
+plot
+
+```
+
+
+
+
+
+
